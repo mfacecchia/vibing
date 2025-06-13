@@ -2,5 +2,12 @@
 name = "vibing"
 version = "1.0.0"
 edition = "2024"
+author = "Feis._."
 
 [dependencies]
+clap = {version = "4.5.40", features = ["derive"]}
+dotenv = "0.15.0"
+keyring = {version = "3.6.2", features = ["apple-native", "windows-native", "sync-secret-service"]}
+reqwest = {version = "0.12.19", features = ["json"]}
+serde = {version = "1.0.219", features = ["derive"]}
+tokio = { version = "1.45.1", features = ["full"] }
