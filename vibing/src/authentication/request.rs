@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct KeycloakAuth {
     pub client_id: String,
     pub client_secret: String,
@@ -15,7 +15,7 @@ impl KeycloakAuth {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct KeycloakDeviceCodeAuthCheck {
     pub device_code: String,
     pub grant_type: String,
@@ -35,6 +35,23 @@ impl KeycloakDeviceCodeAuthCheck {
             grant_type: grant_type.to_owned(),
             client_id: client_id.to_owned(),
             client_secret: client_secret.to_owned(),
+        }
+    }
+}
+
+#[derive(Serialize, Debug)]
+pub struct KeycloakJwtIntrospect {
+    pub client_id: String,
+    pub client_secret: String,
+    pub token: String,
+}
+
+impl KeycloakJwtIntrospect {
+    pub fn new(client_id: &str, client_secret: &str, token: &str) -> KeycloakJwtIntrospect {
+        KeycloakJwtIntrospect {
+            client_id: client_id.to_owned(),
+            client_secret: client_secret.to_owned(),
+            token: token.to_owned(),
         }
     }
 }
