@@ -130,7 +130,31 @@ impl KeycloakRequest {
             .send()
             .await?;
         let json_res = res.json::<response::KeycloakJwtActiveStatus>().await?;
-        println!("{json_res:#?}");
         Ok(json_res.active)
     }
+
+    pub async fn revoke_token(
+        &self,
+        client_id: &str,
+        client_secret: &str,
+        token: &str,
+        ) -> Result<()> {
+            let full_url = format!("{}/protocol/openid-connect/revoke", self.url);
+            let req_body = request::KeycloakJwtIntrospect::new(client_id, client_secret, token);
+            let client = reqwest::Client::new();
+            let res = client
+                .post(full_url)
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .form(&req_body)
+                .send()
+                .await?;
+            if !res.status().is_success() {
+                let error = Box::new(io::Error::new(
+                    std::io::ErrorKind::Other,
+                    format!("Server responded with status {}: {}", res.status(), res.text().await?),
+                ));
+                return Err(error);
+            }
+            Ok(())
+        }
 }
