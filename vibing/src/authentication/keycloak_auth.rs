@@ -1,20 +1,18 @@
 use reqwest;
-use std::{
-    io,
-    time::Duration,
-};
+use std::{io, time::Duration};
 use tokio::time;
 
 use crate::{
     authentication::{
-        request::{KeycloakAuth, KeycloakDeviceCodeAuthCheck},
-        response::{DeviceCodeAuth, KeycloakError, KeycloakSuccessfulAuthentication},
+        request::{self, KeycloakAuth, KeycloakDeviceCodeAuthCheck},
+        response::{self, DeviceCodeAuth, KeycloakError, KeycloakSuccessfulAuthentication},
     },
     creds, env,
     error::Result,
     utils::verbose_print,
 };
 
+// TODO: Add clientId and clientSecret here
 pub struct KeycloakRequest {
     url: String,
 }
@@ -38,9 +36,7 @@ impl KeycloakRequest {
             verbose,
             "Generating authentication _magic_ link... Please wait.",
         );
-        let res = self
-            .generate_device_code(client_id, client_secret)
-            .await?;
+        let res = self.generate_device_code(client_id, client_secret).await?;
         println!("Device code generated!");
         println!(
             "Please, open your browser on any of your devices and go to this link to continue."
@@ -56,6 +52,7 @@ impl KeycloakRequest {
                 Ok(authentication) => {
                     verbose_print(verbose, "Authenticated!");
                     verbose_print(verbose, "Storing credential");
+                    // TODO: move this call out of here (separation of responsibility)
                     creds::store_cred("Vibing X Vibes - by Feis._.", &authentication.access_token)?;
                     break;
                 }
@@ -116,8 +113,24 @@ impl KeycloakRequest {
         let json_res = res.json::<KeycloakSuccessfulAuthentication>().await?;
         Ok(json_res)
     }
-}
 
-fn check_auth() -> bool {
-    todo!("Get credential from storage and fetch backend");
+    pub async fn check_auth(
+        &self,
+        client_id: &str,
+        client_secret: &str,
+        token: &str,
+    ) -> Result<bool> {
+        let full_url = format!("{}/protocol/openid-connect/token/introspect", self.url);
+        let req_body = request::KeycloakJwtIntrospect::new(client_id, client_secret, token);
+        let client = reqwest::Client::new();
+        let res = client
+            .post(full_url)
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .form(&req_body)
+            .send()
+            .await?;
+        let json_res = res.json::<response::KeycloakJwtActiveStatus>().await?;
+        println!("{json_res:#?}");
+        Ok(json_res.active)
+    }
 }
