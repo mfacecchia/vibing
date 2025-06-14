@@ -8,7 +8,7 @@ pub struct VibingCliParser {
 
     /// Print out the trace from all the methods called
     #[arg(short, long)]
-    pub verbose: bool
+    pub verbose: bool,
 }
 
 #[derive(Subcommand, Debug)]
@@ -25,5 +25,5 @@ pub enum AuthArgs {
     /// Logout from the current logger in account
     Logout,
     /// Check your current authentication status
-    Check
+    Check,
 }

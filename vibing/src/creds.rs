@@ -1,4 +1,4 @@
-use keyring::{Entry};
+use keyring::Entry;
 
 use crate::error::Result;
 
