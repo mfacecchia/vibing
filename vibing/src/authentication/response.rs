@@ -1,4 +1,4 @@
-use serde::{Deserialize};
+use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
 pub struct KeycloakError {
@@ -59,5 +59,5 @@ pub struct KeycloakJwtIntrospect {
 
 #[derive(Deserialize, Debug)]
 pub struct KeycloakJwtActiveStatus {
-    pub active: bool
+    pub active: bool,
 }
