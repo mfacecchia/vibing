@@ -6,6 +6,7 @@ author = "Feis._."
 
 [dependencies]
 clap = {version = "4.5.40", features = ["derive"]}
+derive_more = {version = "2.0.1", features = ["error", "display", "from"]}
 dotenv = "0.15.0"
 keyring = {version = "3.6.2", features = ["apple-native", "windows-native", "sync-secret-service"]}
 reqwest = {version = "0.12.19", features = ["json"]}
