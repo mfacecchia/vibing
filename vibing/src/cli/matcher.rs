@@ -1,5 +1,9 @@
 use crate::{
-    authentication::keycloak_auth::KeycloakRequest, cli::args::{AuthArgs, BaseCommands, VibingCliParser}, creds, env, error::Result, utils::verbose_print
+    authentication::keycloak_auth::KeycloakRequest,
+    cli::args::{AuthArgs, BaseCommands, VibingCliParser},
+    creds, env,
+    error::Result,
+    utils::verbose_print,
 };
 use clap::Parser;
 
@@ -28,27 +32,48 @@ async fn match_auth_args(command: AuthArgs, verbose: bool) -> Result<()> {
         AuthArgs::Logout => {
             verbose_print(verbose, "Logging you out...");
             let credential_store_service = env::get_env("CREDENTIAL_STORE_AUTH_SERVICE");
-            let credential_store_user= env::get_env("CREDENTIAL_STORE_AUTH_USER");
-            let access_token = creds::get_cred(credential_store_service.as_str(), credential_store_user.as_str())?;
-            auth_request.revoke_token(env::get_env("VIBING_DEVICE_CODE_CLIENT_ID").as_str(),
-                    env::get_env("VIBING_CLIENT_SECRET").as_str(), access_token.as_str()).await?;
+            let credential_store_user = env::get_env("CREDENTIAL_STORE_AUTH_USER");
+            let access_token = creds::get_cred(
+                credential_store_service.as_str(),
+                credential_store_user.as_str(),
+            )?;
+            auth_request
+                .revoke_token(
+                    env::get_env("VIBING_DEVICE_CODE_CLIENT_ID").as_str(),
+                    env::get_env("VIBING_CLIENT_SECRET").as_str(),
+                    access_token.as_str(),
+                )
+                .await?;
             println!("Successfully logged out!");
             verbose_print(verbose, "Removing credential...");
-            creds::remove_cred(&credential_store_service.as_str(), credential_store_user.as_str())?;
+            creds::remove_cred(
+                &credential_store_service.as_str(),
+                credential_store_user.as_str(),
+            )?;
             verbose_print(verbose, "Done!");
-        },
+        }
         AuthArgs::Check => {
             verbose_print(verbose, "Checking authentication status...");
             // TODO: Handle NoEntry Creds error
-            let access_token = creds::get_cred(env::get_env("CREDENTIAL_STORE_AUTH_SERVICE").as_str(), env::get_env("CREDENTIAL_STORE_AUTH_USER").as_str())?;
-            let is_authenticated = auth_request.check_auth(env::get_env("VIBING_DEVICE_CODE_CLIENT_ID").as_str(),
-                    env::get_env("VIBING_CLIENT_SECRET").as_str(), access_token.as_str()).await?;
+            let access_token = creds::get_cred(
+                env::get_env("CREDENTIAL_STORE_AUTH_SERVICE").as_str(),
+                env::get_env("CREDENTIAL_STORE_AUTH_USER").as_str(),
+            )?;
+            let is_authenticated = auth_request
+                .check_auth(
+                    env::get_env("VIBING_DEVICE_CODE_CLIENT_ID").as_str(),
+                    env::get_env("VIBING_CLIENT_SECRET").as_str(),
+                    access_token.as_str(),
+                )
+                .await?;
             if !is_authenticated {
-                println!("You are not authenticated or your token is expired, please run 'vibing auth login' to login again.");
+                println!(
+                    "You are not authenticated or your token is expired, please run 'vibing auth login' to login again."
+                );
                 return Ok(());
             }
             println!("You are authenticated and ready to make requests!");
-        },
+        }
     }
     Ok(())
 }
