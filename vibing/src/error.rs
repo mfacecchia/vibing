@@ -9,8 +9,8 @@ pub type Result<T> = std::result::Result<T, AppError>;
 #[derive(Debug)]
 pub enum AppError {
     CredentialsNotFound(keyring::Error),
-    AuthorizationError(reqwest::Error),
-    NetworkError(reqwest::Error),
+    AuthorizationError(Option<reqwest::Error>),
+    NetworkError(Option<reqwest::Error>),
     FetchError(reqwest::Error),
     KeycloakError(KeycloakError),
     Other(Error),
@@ -29,10 +29,10 @@ impl From<reqwest::Error> for AppError {
         }
         let res_status = err.status().unwrap();
         if res_status.is_client_error() {
-            return AppError::AuthorizationError(err);
+            return AppError::AuthorizationError(Some(err));
         }
         if res_status.is_server_error() {
-            return AppError::NetworkError(err);
+            return AppError::NetworkError(Some(err));
         }
         AppError::FetchError(err)
     }
@@ -64,35 +64,28 @@ pub fn handle(err: AppError) -> () {
             println!("You are not authorized to execute this operation")
         }
         AppError::NetworkError(_) => {
-            println!(
-                "The server is experiencing some issues at the moment.\n
-                Please, try again in a few minutes."
-            )
+            println!("The server is experiencing some issues at the moment.");
+            println!("Please, try again in a few minutes.");
         }
         AppError::FetchError(_) => {
-            println!(
-                "An unknown error occured while fetching data.\n
-                Please, try again."
-            )
+            println!("An unknown error occured while fetching data.");
+            println!("Please, try again.");
         }
         AppError::CredentialsNotFound(_) => {
-            println!(
-                "Credentials not found in the device's secure storage...\n
-                Try to authenticate again using `vibes auth login`"
-            )
+            println!("Credentials not found in the device's secure storage...");
+            println!("Try to authenticate again using");
+            println!("`vibes auth login`");
         }
         AppError::KeycloakError(_) => {
-            println!(
-                "An error occured while checking your authentication token.\n
-                Please, try again or, if the problem persists, try logging in again using\n
-                `vibing auth login`"
-            )
+            println!("An error occured while checking your authentication token.");
+            println!("Please, try again or, if the problem persists, try logging in again using");
+            println!("`vibing auth login`");
         }
         AppError::Other(_) => {
+            println!("An unknown error occured while satisfying your request...");
             println!(
-                "An unknown error occured while satisfying your request...\n
-            Please, try again. If the problem persists, try to contact the technical support."
-            )
+                "Please, try again. If the problem persists, try to contact the technical support."
+            );
         }
     }
 }
