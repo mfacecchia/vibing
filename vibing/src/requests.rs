@@ -8,7 +8,7 @@ use reqwest::{
     Method, RequestBuilder,
     header::{HeaderMap, HeaderValue},
 };
-use serde::{Serialize, de::DeserializeOwned};
+use serde::{de::DeserializeOwned, Serialize};
 
 pub struct FetchOptions<T>
 where
@@ -43,6 +43,28 @@ where
             data,
         }
     }
+}
+
+pub async fn fetch_backend<T, U>(
+    path: String,
+    method: Method,
+    data: Option<T>,
+    verbose: bool,
+) -> Result<U>
+where
+    T: Serialize,
+    U: DeserializeOwned,
+{
+    let mut fetch_options = FetchOptions::new(
+        env::get_env("BACKEND_URL"),
+        path,
+        method,
+        None,
+        Some(get_cred_use_defaults()?),
+        data,
+    );
+    let res = fetch::<T, U>(&mut fetch_options, verbose).await?;
+    Ok(res)
 }
 
 pub async fn fetch<T, U>(fetch_options: &mut FetchOptions<T>, verbose: bool) -> Result<U>
