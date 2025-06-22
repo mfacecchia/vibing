@@ -1,5 +1,8 @@
-use reqwest;
-use std::{io, time::Duration};
+use reqwest::{
+    self, Method,
+    header::{HeaderMap, HeaderValue},
+};
+use std::time::Duration;
 use tokio::time;
 
 use crate::{
@@ -8,7 +11,8 @@ use crate::{
         response::{self, DeviceCodeAuth, KeycloakError, KeycloakSuccessfulAuthentication},
     },
     creds, env,
-    error::Result,
+    error::{AppError, Result, build_generic_error},
+    requests::{FetchOptions, fetch},
     utils::verbose_print,
 };
 
@@ -104,11 +108,7 @@ impl KeycloakRequest {
             .await?;
         if res.status().is_client_error() {
             let json_res = res.json::<KeycloakError>().await?;
-            let error = Box::new(io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("{}: {}", json_res.error, json_res.error_description),
-            ));
-            return Err(error);
+            return Err(AppError::KeycloakError(json_res));
         }
         let json_res = res.json::<KeycloakSuccessfulAuthentication>().await?;
         Ok(json_res)
@@ -138,23 +138,24 @@ impl KeycloakRequest {
         client_id: &str,
         client_secret: &str,
         token: &str,
-        ) -> Result<()> {
-            let full_url = format!("{}/protocol/openid-connect/revoke", self.url);
-            let req_body = request::KeycloakJwtIntrospect::new(client_id, client_secret, token);
-            let client = reqwest::Client::new();
-            let res = client
-                .post(full_url)
-                .header("Content-Type", "application/x-www-form-urlencoded")
-                .form(&req_body)
-                .send()
-                .await?;
-            if !res.status().is_success() {
-                let error = Box::new(io::Error::new(
-                    std::io::ErrorKind::Other,
-                    format!("Server responded with status {}: {}", res.status(), res.text().await?),
-                ));
-                return Err(error);
-            }
-            Ok(())
-        }
+        verbose: bool,
+    ) -> Result<()> {
+        let mut headers: HeaderMap<HeaderValue> = HeaderMap::new();
+        headers.append(
+            "Content-type",
+            HeaderValue::from_str("application/x-www-form-urlencoded")
+                .map_err(|_| return AppError::Other(Box::new(build_generic_error(None))))?,
+        );
+        let req_body = request::KeycloakJwtIntrospect::new(client_id, client_secret, token);
+        let mut fetch_options = FetchOptions::new(
+            self.url.clone(),
+            "/protocol/openid-connect/revoke".to_owned(),
+            Method::POST,
+            Some(headers),
+            None,
+            Some(req_body),
+        );
+        let _ = fetch::<request::KeycloakJwtIntrospect, ()>(&mut fetch_options, verbose).await?;
+        Ok(())
+    }
 }
