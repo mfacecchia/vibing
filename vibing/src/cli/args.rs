@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand};
+use clap::{Args, Parser, Subcommand};
 
 #[derive(Parser, Debug)]
 #[clap(author, version)]
@@ -16,6 +16,8 @@ pub enum BaseCommands {
     /// Authenticate to the application (required for most of the operations)
     #[command(subcommand)]
     Auth(AuthArgs),
+    #[command(subcommand)]
+    Club(ClubArgs),
 }
 
 #[derive(Subcommand, Debug)]
@@ -26,4 +28,14 @@ pub enum AuthArgs {
     Logout,
     /// Check your current authentication status
     Check,
+}
+
+#[derive(Subcommand, Debug)]
+pub enum ClubArgs {
+    Get(ClubGetArgs),
+}
+
+#[derive(Args, Debug)]
+pub struct ClubGetArgs {
+    pub club_id: u32,
 }
