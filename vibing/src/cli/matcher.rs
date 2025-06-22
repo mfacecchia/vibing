@@ -1,8 +1,9 @@
 use crate::{
     authentication::keycloak_auth::KeycloakRequest,
-    cli::args::{AuthArgs, BaseCommands, VibingCliParser},
+    cli::args::{AuthArgs, BaseCommands, ClubArgs, VibingCliParser},
     creds, env,
     error::Result,
+    features::club::club_requests::get_club_info,
     utils::verbose_print,
 };
 use clap::Parser;
@@ -12,12 +13,13 @@ pub async fn handle_cli_args() -> Result<()> {
     let verbose_flag = args.verbose;
 
     match args.command {
-        BaseCommands::Auth(auth_commands) => match_auth_args(auth_commands, verbose_flag).await?,
+        BaseCommands::Auth(auth_commands) => match_auth_args(&auth_commands, verbose_flag).await?,
+        BaseCommands::Club(club_args) => match_club_args(&club_args, verbose_flag).await?,
     }
     Ok(())
 }
 
-async fn match_auth_args(command: AuthArgs, verbose: bool) -> Result<()> {
+async fn match_auth_args(command: &AuthArgs, verbose: bool) -> Result<()> {
     let auth_request = KeycloakRequest::new();
     match command {
         AuthArgs::Login => {
@@ -42,6 +44,7 @@ async fn match_auth_args(command: AuthArgs, verbose: bool) -> Result<()> {
                     env::get_env("VIBING_DEVICE_CODE_CLIENT_ID").as_str(),
                     env::get_env("VIBING_CLIENT_SECRET").as_str(),
                     access_token.as_str(),
+                    verbose,
                 )
                 .await?;
             println!("Successfully logged out!");
@@ -73,6 +76,15 @@ async fn match_auth_args(command: AuthArgs, verbose: bool) -> Result<()> {
                 return Ok(());
             }
             println!("You are authenticated and ready to make requests!");
+        }
+    }
+    Ok(())
+}
+
+async fn match_club_args(club_args: &ClubArgs, verbose_flag: bool) -> Result<()> {
+    match club_args {
+        ClubArgs::Get(club_get_args) => {
+            get_club_info(club_get_args.club_id, verbose_flag).await?;
         }
     }
     Ok(())
