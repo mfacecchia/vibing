@@ -8,7 +8,7 @@ use reqwest::{
     Method, RequestBuilder,
     header::{HeaderMap, HeaderValue},
 };
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 
 pub struct FetchOptions<T>
 where
@@ -43,6 +43,40 @@ where
             data,
         }
     }
+}
+
+#[derive(Serialize, Debug)]
+#[serde(rename_all(serialize = "camelCase"))]
+pub struct PageOptions {
+    pub page: u32,
+    pub size: u32,
+    pub sort: Option<String>,
+    pub direction: Option<PageDirection>,
+    pub show_total_count: bool,
+}
+
+impl PageOptions {
+    pub fn new(
+        page: Option<u32>,
+        size: Option<u32>,
+        sort: Option<String>,
+        direction: Option<PageDirection>,
+        show_total_count: Option<bool>,
+    ) -> PageOptions {
+        PageOptions {
+            page: page.unwrap_or(0),
+            size: size.unwrap_or(5),
+            sort,
+            direction,
+            show_total_count: show_total_count.unwrap_or(false),
+        }
+    }
+}
+
+#[derive(Serialize, Debug)]
+pub enum PageDirection {
+    Desc,
+    Asc,
 }
 
 pub async fn fetch_backend<T, U>(
